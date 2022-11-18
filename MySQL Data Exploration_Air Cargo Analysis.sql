@@ -39,9 +39,15 @@ where class_id = 'Bussiness';
 select concat(first_name, " ", last_name) as full_name 
 from customer;
 
+## create a generated column full_name
+alter table customer 
+add full_name varchar(200)
+generated always as(concat(first_name, " ", last_name));
+describe customer;
+
 ## extract the customers who have booked a ticket
 ## using inner join clause
-select c.customer_id, concat(first_name, " ", last_name) as full_name, 
+select c.customer_id, full_name, 
 count(no_of_tickets), sum(Price_per_ticket) from customer c
 inner join ticket_details t
 	on c.customer_id = t.customer_id
@@ -49,7 +55,7 @@ inner join ticket_details t
     order by t.customer_id;
     
 ## identify the customers of Emirates brand
-select c.customer_id, concat(first_name, " ", last_name) as full_name, brand from customer c
+select c.customer_id, full_name, brand from customer c
 inner join ticket_details d
 	on c.customer_id = d.customer_id
 	where brand = 'Emirates'
@@ -57,7 +63,7 @@ inner join ticket_details d
 
 ##  identify the customers who have travelled by Economy Plus class
 select p.customer_id, 
-	concat(first_name, " ", last_name) as full_name, count(flight_num) as number_flights,
+	full_name, count(flight_num) as number_flights,
     class_id from passengers_on_flights p
     inner join customer c
 	on p.customer_id = c.customer_id
@@ -89,8 +95,7 @@ select customer_id, route_id
     
 ## calculate the total price of all tickets booked by each customer across different aircraft IDs
 ## using rollup function
-select t.customer_id, 
-	concat(first_name, " ", last_name) as full_name, 
+select t.customer_id, full_name, 
     aircraft_id, sum(price_per_ticket*no_of_tickets) total_sum
 from ticket_details t
 inner join customer c
@@ -99,9 +104,8 @@ group by customer_id, aircraft_id with rollup;
 
 ## create a view with only business class customers along with the brand of airlines
 create or replace view bsclass_view as
-select t.customer_id, 
-	concat(first_name, " ", last_name) as full_name, 
-    brand, class_id from ticket_details t
+select t.customer_id, full_name, brand, class_id 
+	from ticket_details t
     inner join customer c
 	on t.customer_id = c.customer_id
 	where class_id = 'Bussiness'
@@ -113,8 +117,8 @@ select * from bsclass_view;
 delimiter $$
 create procedure passengers_sp1 (In route tinyint)
 begin
-SELECT c.customer_id, concat(first_name, " ", last_name) as full_name, 
-   route_id, depart, arrival, seat_num, class_id, travel_date, flight_num from customer c
+SELECT c.customer_id, full_name, route_id, depart, arrival, seat_num, class_id, travel_date, flight_num 
+	from customer c
     inner join passengers_on_flights p
 	on c.customer_id = p.customer_id
 WHERE route_id = route;
