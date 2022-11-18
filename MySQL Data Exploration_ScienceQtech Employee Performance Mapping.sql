@@ -1,4 +1,4 @@
-## create a new database, upload the tables, set the database to be used as default
+##create a new database, upload the tables, set the database to be used as default
 create database employee;
 use employee;
 
@@ -44,25 +44,32 @@ select concat(FIRST_NAME, " ", LAST_NAME) as NAME
 from emp_record_table
 where dept = "FINANCE";
 
+## create a generated column FULL_NAME combining FIRST_NAME and LAST_NAME
+alter table emp_record_table
+add FULL_NAME VARCHAR(200)
+generated always as(concat(FIRST_NAME, " ", LAST_NAME));
+
+describe emp_record_table;
+
 ## list only those employees who have someone reporting to them. Also, show the number of reporters (including the President).
-select manager_id, first_name, last_name, role, count(emp_id) as reporters_count
+select manager_id, full_name, role, count(emp_id) as reporters_count
 from emp_record_table 
 group by manager_id
 having count(emp_id) > 0
 order by reporters_count;
 
 ## list down all the employees from the healthcare and finance departments using union
-select emp_id, CONCAT(FIRST_NAME,' ',LAST_NAME) AS NAME, dept 
+select emp_id, full_name, dept 
 from emp_record_table
 where dept = "HEALTHCARE"
 union
-select emp_id, CONCAT(FIRST_NAME,' ',LAST_NAME) AS NAME, dept 
+select emp_id, full_name, dept 
 from emp_record_table
 where dept = "FINANCE";
 
 ## list down employee details grouped by department. 
 ## Also include the respective employee rating along with the max employee rating for the department.
-select EMP_ID, CONCAT(FIRST_NAME,' ',LAST_NAME) AS NAME, ROLE, DEPT, EMP_RATING, MAX(EMP_RATING)
+select EMP_ID, FULL_NAME, ROLE, DEPT, EMP_RATING, MAX(EMP_RATING)
 over (partition by dept) as max_emp_rating
 from emp_record_table
 order by DEPT, EMP_RATING desc;
@@ -75,7 +82,7 @@ group by role
 order by min_salary;
 
 ## assign ranks to each employee based on their experience. 
-select emp_id, CONCAT(FIRST_NAME,' ',LAST_NAME) AS NAME, DEPT, EXP,
+select emp_id, full_name, DEPT, EXP,
 DENSE_RANK() OVER(order by exp) AS EMP_RANK 
 FROM EMP_RECORD_TABLE;
 
@@ -88,7 +95,7 @@ create or replace view emp_view as
 select * from emp_view;
 
 ## a nested query to find employees with experience of more than 10 years. 
-select EMP_ID, CONCAT(FIRST_NAME, " ", LASt_NAME) as NAME, EXP 
+select EMP_ID, FULL_NAME, EXP 
 from emp_record_table
 where EMP_ID in(select EMP_ID FROM emp_record_table where EXP > 10)
 order by EXP;
@@ -149,7 +156,7 @@ create index emp_fn_idx on emp_record_table(first_name(25));
 
 ## calculate the bonus for all the employees, based on their ratings and salaries 
 ## (Use the formula: 5% of salary * employee rating).
-select first_name, last_name, emp_rating, salary,
+select full_name, emp_rating, salary,
 round((salary * .05 * emp_rating),0) as Bonus   
 from emp_record_table;
 
